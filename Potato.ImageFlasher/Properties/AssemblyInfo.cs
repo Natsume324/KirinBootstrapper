@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Potato.ImageFlasher")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("KirinSerialBooter")]
+[assembly: AssemblyDescription("It is used to load the boot file to the Kirin COM1.0 serial port")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Potato.ImageFlasher")]
-[assembly: AssemblyCopyright("Copyright © mashed-potatoes 2021")]
+[assembly: AssemblyProduct("KirinSerialBooter")]
+[assembly: AssemblyCopyright("Natsume Takashi")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("b74d03cc-ac13-447a-bcd8-c2044da84eeb")]
+[assembly: Guid("97A675BC-549E-D290-93F9-BCCD9D6DBA0E")]
 
 // Version information for an assembly consists of the following four values:
 //

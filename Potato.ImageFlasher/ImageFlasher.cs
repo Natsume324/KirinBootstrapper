@@ -10,14 +10,17 @@ namespace Potato.ImageFlasher
     {
         private const int BAUDRATE = 115200;
         private const int MAX_DATA_LEN = 0x400;
-        private readonly static byte[] headframe = new byte[] { 0xFE, 0x00, 0xFF, 0x01 };
-        private readonly static byte[] dataframe = new byte[] { 0xDA };
-        private readonly static byte[] tailframe = new byte[] { 0xED };
+        private readonly static byte[] HeadFrame = { 0xFE, 0x00, 0xFF, 0x01 };
+        private readonly static byte[] DataFrame = { 0xDA };
+        private readonly static byte[] TailFrame = { 0xED };
 
         private SerialPort port;
 
         public void Open(string portName)
         {
+            if (port != null && port.IsOpen)
+                throw new InvalidOperationException("Port is already open.");
+
             port = new SerialPort
             {
                 PortName = portName,
@@ -32,49 +35,59 @@ namespace Potato.ImageFlasher
 
         public void Close()
         {
-            port.Close();
-            port.Dispose();
-            port = null;
+            if (port != null)
+            {
+                port.Close();
+                port.Dispose();
+                port = null;
+            }
         }
 
-        public void Write(string path, int address, Action<int> reportProgress = null)
+        public void Write(string path, int address, bool sendTailFrame = true, Action<int> reportProgress = null)
         {
-            var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-            var length = (int)stream.Length;
-            var nframes = length / (MAX_DATA_LEN + (length % MAX_DATA_LEN > 0 ? 1 : 0));
-            var n = 0;
-            var buffer = new byte[MAX_DATA_LEN];
+            if (!File.Exists(path))
+                throw new FileNotFoundException($"File not found: {path}");
 
-            SendHeadFrame(length, address);
-
-            while (length > MAX_DATA_LEN)
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
-                stream.Read(buffer, 0, MAX_DATA_LEN);
-                SendDataFrame(n + 1, buffer);
+                int totalLength = (int)stream.Length;
+                int remainingLength = totalLength;
+                int frameCount = (int)Math.Ceiling((double)totalLength / MAX_DATA_LEN);
+                int frameNumber = 0;
 
-                n++;
-                length -= MAX_DATA_LEN;
+                SendHeadFrame(totalLength, address);
 
-                if (n % (nframes > 250 ? 10 : 3) == 0)
+                byte[] buffer = new byte[MAX_DATA_LEN];
+                while (remainingLength > 0)
                 {
-                    reportProgress?.Invoke((int)(100f * n / nframes));
+                    int bytesToRead = Math.Min(MAX_DATA_LEN, remainingLength);
+                    stream.Read(buffer, 0, bytesToRead);
+
+                    frameNumber++;
+                    SendDataFrame(frameNumber, buffer.Take(bytesToRead).ToArray());
+
+                    remainingLength -= bytesToRead;
+
+
+                    if (frameCount > 250 ? frameNumber % 10 == 0 : frameNumber % 3 == 0)
+                    {
+                        reportProgress?.Invoke(frameNumber * 100 / frameCount);
+                    }
+                }
+
+                reportProgress?.Invoke(100);
+
+
+                if (sendTailFrame)
+                {
+                    SendTailFrame(frameNumber + 1);
                 }
             }
-
-            if (length > 0)
-            {
-                buffer = new byte[length];
-                stream.Read(buffer, 0, length);
-                SendDataFrame(n + 1, buffer);
-            }
-
-            reportProgress?.Invoke(100);
-            SendTailFrame(n + 2);
         }
 
         private void SendHeadFrame(int length, int address)
         {
-            var data = new List<byte>(headframe);
+            var data = new List<byte>(HeadFrame);
 
             data.AddRange(BitConverter.GetBytes(length).Reverse());
             data.AddRange(BitConverter.GetBytes(address).Reverse());
@@ -82,12 +95,12 @@ namespace Potato.ImageFlasher
             SendFrame(data.ToArray());
         }
 
-        private void SendDataFrame(int n, byte[] data)
+        private void SendDataFrame(int frameNumber, byte[] data)
         {
-            var frame = new List<byte>(dataframe)
+            var frame = new List<byte>(DataFrame)
             {
-                (byte)(n & 0xFF),
-                (byte)((~n) & 0xFF)
+                (byte)(frameNumber & 0xFF),
+                (byte)((~frameNumber) & 0xFF)
             };
 
             frame.AddRange(data);
@@ -95,12 +108,12 @@ namespace Potato.ImageFlasher
             SendFrame(frame.ToArray());
         }
 
-        private void SendTailFrame(int n)
+        private void SendTailFrame(int frameNumber)
         {
-            var frame = new List<byte>(tailframe)
+            var frame = new List<byte>(TailFrame)
             {
-                (byte)(n & 0xFF),
-                (byte)((~n) & 0xFF)
+                (byte)(frameNumber & 0xFF),
+                (byte)((~frameNumber) & 0xFF)
             };
 
             SendFrame(frame.ToArray());
@@ -110,26 +123,32 @@ namespace Potato.ImageFlasher
         {
             var crc = CRC.GetChecksum(data);
 
-            var frameList = new List<byte>(data)
+            var frameWithCRC = new List<byte>(data)
             {
                 (byte)((crc >> 8) & 0xFF),
                 (byte)(crc & 0xFF)
             };
 
-            var count = frameList.Count();
-            var frame = frameList.ToArray();
+            port.Write(frameWithCRC.ToArray(), 0, frameWithCRC.Count);
 
-            port.Write(frame, 0, count);
 
-            byte _ack = (byte)port.ReadByte();
+            int ack;
+            try
+            {
+                ack = port.ReadByte();
+            }
+            catch (TimeoutException)
+            {
+                throw new IOException("Timeout waiting for ACK from the device.");
+            }
+
+            if (ack != 0xAA)
+            {
+                throw new InvalidDataException($"Invalid ACK received: 0x{ack:X2}. Expected: 0xAA.");
+            }
 
             port.DiscardInBuffer();
             port.DiscardOutBuffer();
-
-            if (_ack != 0xAA)
-            {
-                throw new Exception(string.Format("ACK is invalid! ACK={0:X2}; Excepted={1:X2}", _ack, 0xAA));
-            }
         }
     }
 }
