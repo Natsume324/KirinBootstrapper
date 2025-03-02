@@ -1,31 +1,14 @@
-# Potato.ImageFlasher
-[![Build Status](https://travis-ci.org/mashed-potatoes/Potato.ImageFlasher.svg?branch=master)](https://travis-ci.org/mashed-potatoes/Potato.ImageFlasher)
-[![NuGet Version](https://img.shields.io/nuget/v/Potato.ImageFlasher.svg)](https://www.nuget.org/packages/Potato.ImageFlasher)
-[![Nuget](https://img.shields.io/nuget/dt/Potato.ImageFlasher)](https://www.nuget.org/packages/Potato.ImageFlasher)
-[![CodeFactor](https://www.codefactor.io/repository/github/mashed-potatoes/potato.imageflasher/badge)](https://www.codefactor.io/repository/github/mashed-potatoes/potato.imageflasher)
+# KirinBootstrapper
 ![GPL-3.0](https://img.shields.io/github/license/mashed-potatoes/Potato.ImageFlasher.svg)
 
-A tiny library for bootloader flashing in VCOM_DOWNLOAD mode on Huawei phones.
+A program is used to send images to the usbdownloadmode of the Kirin device
 
-Based on [@penn5](https://github.com/penn5)'s project — [hisi-idt](https://github.com/penn5/hisi-idt).
+Based on project — [Potato.ImageFlasher]([https://github.com/penn5/hisi-idt](https://github.com/mashed-potatoes/Potato.ImageFlasher)).
 
-# Example
+# Usage: 
+KirinBootstrapper <port> [<file> <address> <sendTailFrame>]
 
-```c#
-var flasher = new ImageFlasher();
-
-// Open serial port, for example COM3
-flasher.Open("COM3");
-
-// Write xloader image to 0x00020000
-flasher.Write("xloader.img", 0x00020000);
-
-// Write fastboot image to 0x1AC00000 with progress reporting
-flasher.Write("fastboot.img", 0x1AC00000, x => Console.WriteLine($"Progress: {x}%"));
-
-// Close serial port
-flasher.Close();
-```
+If only the port is provided, it enters the interactive mode
 
 # License
 
