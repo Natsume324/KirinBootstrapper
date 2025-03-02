@@ -1,7 +1,7 @@
 # KirinBootstrapper
 ![GPL-3.0](https://img.shields.io/github/license/mashed-potatoes/Potato.ImageFlasher.svg)
 
-A program is used to send images to the usbdownloadmode of the Kirin device
+A program is used to send images file to the USB Download Mode of the Kirin device
 
 Based on project — [Potato.ImageFlasher](https://github.com/mashed-potatoes/Potato.ImageFlasher).
 
