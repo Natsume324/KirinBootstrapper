@@ -1,11 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
+using System.Management;
+using System.Text.RegularExpressions;
 
 namespace Potato.ImageFlasher.CLI
 {
     class Program
     {
+        private const int VID = 0x12D1, PID = 0x3609;
         static ImageFlasher flasher;
         static string portName;
 
@@ -20,6 +25,32 @@ namespace Potato.ImageFlasher.CLI
             }
 
             portName = args[0];
+
+            if (portName == "auto")
+            {
+                Console.WriteLine("Searching port...");
+                var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE ClassGuid=\"{4d36e978-e325-11ce-bfc1-08002be10318}\"");
+                var list = searcher.Get();
+
+                foreach (ManagementObject obj in list)
+                {
+                    // Excepted format: USB\VID_12D1&PID_3609\6&127ABA2B&0&2
+                    var sdata = obj["DeviceID"].ToString().Split('\\');
+
+                    if (sdata.Length < 2 || sdata[1] != string.Format("VID_{0:X4}&PID_{1:X4}", VID, PID))
+                    {
+                        continue;
+                    }
+
+                    var match = Regex.Match(obj["Name"].ToString(), @"COM\d+");
+
+                    if (match.Success)
+                    {
+                        portName = match.Value;
+                        Console.WriteLine($"Found port {portName}");
+                    }
+                }
+            }
 
             flasher = new ImageFlasher();
 
@@ -64,7 +95,7 @@ namespace Potato.ImageFlasher.CLI
                             continue;
                         }
 
- 
+
                         bool sendTailFrame = parts.Length > 2 ? bool.TryParse(parts[2], out var result) && result : true;
 
                         try
@@ -73,10 +104,10 @@ namespace Potato.ImageFlasher.CLI
                             flasher.Write(filePath, address, sendTailFrame, progress =>
                             {
 
-                                int progressLength = 50; 
-                                int progressCount = (int)(progress * progressLength / 100); 
+                                int progressLength = 50;
+                                int progressCount = (int)(progress * progressLength / 100);
                                 string progressBar = new string('-', progressCount) + new string(' ', progressLength - progressCount);
- 
+
                                 Console.Write($"\r[{progressBar}] {progress}%");
                             });
 
@@ -126,8 +157,8 @@ namespace Potato.ImageFlasher.CLI
                         flasher.Write(filePath, address, sendTailFrame, progress =>
                         {
 
-                            int progressLength = 100; 
-                            int progressCount = (int)(progress * progressLength / 100); 
+                            int progressLength = 100;
+                            int progressCount = (int)(progress * progressLength / 100);
                             string progressBar = new string('-', progressCount) + new string(' ', progressLength - progressCount);
 
                             Console.Write($"\r[{progressBar}] {progress}%");
