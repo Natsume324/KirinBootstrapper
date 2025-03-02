@@ -9,6 +9,7 @@ Based on project — [Potato.ImageFlasher]([https://github.com/penn5/hisi-idt](h
 KirinBootstrapper <port> <file> <address> <sendTailFrame>
 
 If only the port is provided, it enters the interactive mode
+![image](example.png)
 
 # License
 
