@@ -14,6 +14,7 @@ If only the port parameter is provided, it enters the interactive mode and can c
 
 If only the port is provided, it enters the interactive mode
 ![image](example.png)
+![image](auto-port.png)
 
 # License
 
