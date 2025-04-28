@@ -8,6 +8,8 @@ Based on project — [Potato.ImageFlasher](https://github.com/mashed-potatoes/Po
 # Usage: 
 KirinBootstrapper <port> <file> <address> <sendTailFrame>
 
+port can be "auto"
+
 If only the port is provided, it enters the interactive mode
 ![image](example.png)
 
