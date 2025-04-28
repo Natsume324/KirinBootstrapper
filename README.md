@@ -6,7 +6,7 @@ A program is used to send images file to the USB Download Mode of the Kirin devi
 Based on project — [Potato.ImageFlasher](https://github.com/mashed-potatoes/Potato.ImageFlasher).
 
 # Usage: 
-KirinBootstrapper 111
+KirinBootstrapper 111 <port>
 
 port can be "auto"
 
